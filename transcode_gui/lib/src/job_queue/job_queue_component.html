@@ -1,0 +1,47 @@
+
+<material-dialog>
+<job-settings></job-settings>
+</material-dialog>
+
+
+<material-dialog>
+    {{selectedJob}}
+</material-dialog>
+
+<material-button icon>
+    <material-icon icon="pause"></material-icon>
+</material-button>
+<material-button icon>
+    <material-icon icon="play_arrow"></material-icon>
+</material-button>
+<material-button (trigger)="refresh" icon>
+    <material-icon icon="refresh"></material-icon>
+</material-button>
+
+<div *ngIf="items.isNotEmpty" style="width:100%;">
+        <div *ngFor="let item of items; let i=index" style="width:100%;">
+            <table style="width:100%;">
+                <tr>
+                   <td rowspan="2">
+                       <material-icon icon="done" *ngIf="item.status=='complete'"></material-icon>
+                       <material-icon icon="error" *ngIf="item.status=='issue'"></material-icon>
+                       <material-icon icon="timer" *ngIf="item.status=='pending'"></material-icon>
+                       <material-spinner *ngIf="item.status=='active'"></material-spinner>
+                   </td>
+                    <td><h2>{{item.path}}</h2></td>
+                    <td rowspan="2"><material-button (trigger)="edit(item.id)" icon>
+                        <material-icon icon="edit"></material-icon>
+                    </material-button><material-button (trigger)="info(item.id)" icon>
+                        <material-icon icon="info"></material-icon>
+                    </material-button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <material-progress [activeProgress]="item.percent"></material-progress>
+                    </td>
+                </tr>
+            </table>
+
+      </div>
+</div>
+
