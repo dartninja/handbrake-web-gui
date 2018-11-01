@@ -11,8 +11,13 @@ class RpcService {
 
   Future<dynamic> clientWrapper(Function work) async {
 
-    String url = "ws://${window.location.host}:${window.location.port}";
+    String url = "ws://${window.location.host}";
 
+    if(window.location.port?.length??0>0) {
+      url = "$url:${window.location.port}";
+    } else if(window.location.protocol=="https") {
+      url = "$url:443";
+    }
 
     log.finer("Websocket URL: $url");
     // When running in dev, since I use PHPStorm, the client runs via a different
