@@ -6,6 +6,7 @@ import '../enums/stream_types.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:app/data/stream_data.dart';
+import 'package:app/shared.dart';
 
 class FileWatchIsolate {
   static final Logger _log = new Logger('HandbrakeIsolate');
@@ -59,9 +60,7 @@ class FileWatchIsolate {
   static void _startIsolate(FileWatcherIsolateConfig config) async {
     try {
       Logger.root.level = Level.ALL;
-      Logger.root.onRecord.listen((LogRecord rec) {
-        print('${rec.level.name}: ${rec.time}: ${rec.message}');
-      });
+      Logger.root.onRecord.listen(logToConsole);
 
       ReceivePort receivePort = new ReceivePort();
       config.port.send(receivePort.sendPort);

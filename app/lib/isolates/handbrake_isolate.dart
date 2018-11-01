@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:app/shared.dart';
 
 typedef HandbrakeIsolateConfig GetNextJobFunction();
 
@@ -74,9 +75,7 @@ class HandbrakeIsolate {
   static void _startIsolate(SendPort sendPort) {
     try {
       Logger.root.level = Level.ALL;
-      Logger.root.onRecord.listen((LogRecord rec) {
-        print('${rec.level.name}: ${rec.time}: ${rec.message}');
-      });
+      Logger.root.onRecord.listen(logToConsole);
 
       ReceivePort receivePort = new ReceivePort();
       sendPort.send(receivePort.sendPort);
