@@ -13,7 +13,7 @@ class RpcService {
 
     String url = "ws://${window.location.host}";
 
-    if(window.location.port?.length??0>0) {
+    if(window.location.port?.isNotEmpty??false) {
       url = "$url:${window.location.port}";
     } else if(window.location.protocol=="https") {
       url = "$url:443";
