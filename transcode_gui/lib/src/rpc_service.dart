@@ -11,12 +11,14 @@ class RpcService {
 
   Future<dynamic> clientWrapper(Function work) async {
 
-    String url = "ws://${window.location.host}";
+    String protocol = "ws";
+    if(window.location.protocol=="https:") {
+      protocol = "wss";
+    }
+    String url = "$protocol://${window.location.host}";
 
     if(window.location.port?.isNotEmpty??false) {
       url = "$url:${window.location.port}";
-    } else if(window.location.protocol=="https:") {
-      url = "$url:443";
     }
 
     log.finer("Websocket URL: $url");
