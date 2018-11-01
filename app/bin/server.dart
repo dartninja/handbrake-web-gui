@@ -30,7 +30,7 @@ main(List<String> args) async {
     ..addOption('complete-dir', abbr: 'c', defaultsTo: "complete")
     ..addOption('output-dir', abbr: 'o', defaultsTo: "output")
     ..addOption('ffprobe', defaultsTo: 'ffprobe')
-    ..addOption('handbrake-cli', defaultsTo: 'handbrake-cli');
+    ..addOption('handbrake-cli', defaultsTo: 'HandBrakeCLI');
 
   var result = parser.parse(args);
 
