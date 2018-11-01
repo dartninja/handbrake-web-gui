@@ -136,6 +136,7 @@ main(List<String> args) async {
 
   });
 
+  print("Hosting site files from $webDir");
   var staticHandler = createStaticHandler(webDir, defaultDocument: "index.html");
   
   

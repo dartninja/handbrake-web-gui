@@ -23,7 +23,7 @@ RUN cd /build/transcode_gui && pub get
 ADD . /build
 
 RUN  pub global activate webdev
-RUN cd /build/transcode_gui && pub global run webdev build --release --output=/app/web/
+RUN cd /build/transcode_gui && pub global run webdev build --release && mv /build/transcode_gui/build/ /app/web/
 RUN rm /build -R
 
 WORKDIR /app
