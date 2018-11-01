@@ -8,11 +8,13 @@ RUN curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_
 RUN apt-get -q update
 RUN apt-get install --no-install-recommends -y -q ffmpeg imagemagick ghostscript dart handbrake-cli
 
-ENV PATH="/usr/lib/dart/bin:${PATH}"
+ENV PATH="/usr/lib/dart/bin:${PATH}:${HOME}/.pub-cache/bin"
 
 ADD app/pubspec.yaml /app/pubspec.yaml
 
 RUN cd /app && pub get
+
+ADD app/ /app/
 
 ADD transcode_gui/pubspec.yaml /build/transcode_gui/pubspec.yaml
 
@@ -20,7 +22,7 @@ RUN cd /build/transcode_gui && pub get
 
 ADD . /build
 
-RUN cd /build/transcode_gui && pub build --mode=release --output=/app/web/ && cd / && rm /build -R
+RUN cd /build/transcode_gui && pub global run webdev build --release --output=/app/web/ && cd / && rm /build -R
 
 WORKDIR /app
 
