@@ -33,4 +33,4 @@ EXPOSE 8080
 VOLUME /app/data
 
 CMD []
-ENTRYPOINT ["/usr/bin/dart", "/app/server.dart", "--data-dir=/app/data", "--web-dir=/app/web"]
+ENTRYPOINT ["/usr/bin/dart", "bin/server.dart", "--data-dir=/app/data", "--web-dir=/app/web"]
