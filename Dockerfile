@@ -1,7 +1,7 @@
 FROM ubuntu:cosmic
 
 RUN apt-get -q update
-RUN apt-get install --no-install-recommends -y -q apt-transport-https software-properties-common curl
+RUN apt-get install --no-install-recommends -y -q apt-transport-https software-properties-common curl apt-key
 RUN add-apt-repository ppa:stebbins/handbrake-releases
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 RUN curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
