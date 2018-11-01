@@ -156,7 +156,7 @@ main(List<String> args) async {
     }
   };
 
-  var shelfServer = await io.serve(handler, 'localhost', port);
+  var shelfServer = await io.serve(handler, InternetAddress.anyIPv6, port);
   print('Serving at http://${shelfServer.address.host}:${shelfServer.port}');
 
 
