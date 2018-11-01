@@ -17,6 +17,7 @@ dependencies:
   path: any
   logging: any
   uuid: any
+  stack_trace: any
   shelf_static: any
 #dev_dependencies:
 #  test: ^1.0.0

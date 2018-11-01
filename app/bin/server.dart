@@ -14,12 +14,19 @@ import 'package:app/server.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:shelf_static/shelf_static.dart';
+import 'package:stack_trace/stack_trace.dart';
 
 main(List<String> args) async {
   Logger.root.level = Level.ALL;
 
   Logger.root.onRecord.listen((LogRecord rec) {
     print('${rec.level.name}: ${rec.time}: ${rec.message}');
+    if(rec.error!=null) {
+      print(rec.error.toString());
+    }
+    if(rec.stackTrace!=null) {
+      print(Trace.format(rec.stackTrace));
+    }
   });
 
 
