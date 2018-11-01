@@ -15,7 +15,7 @@ class RpcService {
 
     if(window.location.port?.isNotEmpty??false) {
       url = "$url:${window.location.port}";
-    } else if(window.location.protocol=="https") {
+    } else if(window.location.protocol=="https:") {
       url = "$url:443";
     }
 
