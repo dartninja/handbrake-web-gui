@@ -11,8 +11,10 @@ class RpcService {
 
   Future<dynamic> clientWrapper(Function work) async {
 
-    String url = "ws://${window.location.host}/";
+    String url = "ws://${window.location.host}:${window.location.port}";
 
+
+    log.finer("Websocket URL: $url");
     // When running in dev, since I use PHPStorm, the client runs via a different
     // server than the dartalog server component. This is usually on a 5-digit port,
     // which theoretically wouldn't be used ina  real deployment.
