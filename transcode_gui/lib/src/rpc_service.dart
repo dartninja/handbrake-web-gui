@@ -17,9 +17,6 @@ class RpcService {
     }
     String url = "$protocol://${window.location.host}";
 
-    if(window.location.port?.isNotEmpty??false) {
-      url = "$url:${window.location.port}";
-    }
 
     log.finer("Websocket URL: $url");
     // When running in dev, since I use PHPStorm, the client runs via a different
