@@ -46,11 +46,11 @@ class JobQueueComponent implements OnInit {
 
 
   @override
-  Future<Null> ngOnInit() async {
+  Future<void> ngOnInit() async {
     log.finest("ngOnInit");
 
 
-    var timer = new Timer.periodic(new Duration(seconds: 10), (t) => refresh(), );
+    var timer = new Timer.periodic(new Duration(seconds: 5), (t) => refresh(), );
   }
 
   Future<void> refresh() async {
@@ -59,6 +59,10 @@ class JobQueueComponent implements OnInit {
     items = await _jobQueueService.getJobQueue();
   }
 
+  Future<void> clear() async {
+    await _jobQueueService.clearComplete();
+    await refresh();
+  }
 
   Future<void> edit(String id) async {
 

@@ -34,27 +34,31 @@ class HandbrakeIsolate {
 
   HandbrakeIsolate(this.getNextJob) {
     _isolateReceivePort.listen((dynamic data) {
-      if (data is HandbrakeIsolateProgress) {
-        _progressController.add(data);
-      } else if (data is HandbrakeIsolateComplete) {
-        _completeController.add(data);
-      } else if (data is SendPort) {
-        _isolateSendPort = data;
-      } else if (data is String) {
-        switch (data) {
-          case requestJob:
-            final HandbrakeIsolateConfig nextJob = getNextJob();
-            if (nextJob == null) {
-              _log.finest("No next job available, telling isolate to wait");
-              _isolateSendPort.send(waitForJob);
-            } else {
-              _log.finest("Next job found, sending to isolate");
-              _isolateSendPort.send(nextJob);
-            }
-            break;
-          default:
-            throw new Exception("Unknown request from isolate: $data");
+      try {
+        if (data is HandbrakeIsolateProgress) {
+          _progressController.add(data);
+        } else if (data is HandbrakeIsolateComplete) {
+          _completeController.add(data);
+        } else if (data is SendPort) {
+          _isolateSendPort = data;
+        } else if (data is String) {
+          switch (data) {
+            case requestJob:
+              final HandbrakeIsolateConfig nextJob = getNextJob();
+              if (nextJob == null) {
+                _log.finest("No next job available, telling isolate to wait");
+                _isolateSendPort.send(waitForJob);
+              } else {
+                _log.finest("Next job found, sending to isolate");
+                _isolateSendPort.send(nextJob);
+              }
+              break;
+            default:
+              throw new Exception("Unknown request from isolate: $data");
+          }
         }
+      } catch (e, st) {
+        _log.severe("_isolateReceivePort.listen", e, st);
       }
     });
   }
@@ -68,41 +72,52 @@ class HandbrakeIsolate {
   }
 
   static void _startIsolate(SendPort sendPort) {
-    Logger.root.level = Level.ALL;
-    Logger.root.onRecord.listen((LogRecord rec) {
-      print('${rec.level.name}: ${rec.time}: ${rec.message}');
-    });
+    try {
+      Logger.root.level = Level.ALL;
+      Logger.root.onRecord.listen((LogRecord rec) {
+        print('${rec.level.name}: ${rec.time}: ${rec.message}');
+      });
 
-    ReceivePort receivePort = new ReceivePort();
-    sendPort.send(receivePort.sendPort);
+      ReceivePort receivePort = new ReceivePort();
+      sendPort.send(receivePort.sendPort);
 
-    receivePort.listen((dynamic data) async {
-      if (data is String) {
-        switch (data) {
-          case waitForJob:
-            _log.finest("Isolate told to wait, waiting");
-            sleep(new Duration(seconds: 10));
+      receivePort.listen((dynamic data) async {
+        try {
+          if (data is String) {
+            switch (data) {
+              case waitForJob:
+                _log.finest("Isolate told to wait, waiting");
+                sleep(new Duration(seconds: 10));
+                sendPort.send(requestJob);
+                break;
+              default:
+                throw new Exception("Unknown command to isolate: $data");
+            }
+          } else if (data is HandbrakeIsolateConfig) {
+            _log.finest("Isolate given config, beginning processing");
+            await _runHandbrake(data, sendPort);
             sendPort.send(requestJob);
-            break;
-          default:
-            throw new Exception("Unknown command to isolate: $data");
+          }
+        } catch (e, st) {
+          _log.severe("receivePort.listen", e, st);
         }
-      } else if (data is HandbrakeIsolateConfig) {
-        _log.finest("Isolate given config, beginning processing");
-        await _startHandbrakeIsolate(data, sendPort);
-        sendPort.send(requestJob);
-      }
-    });
+      });
 
-    sendPort.send(requestJob);
+      sendPort.send(requestJob);
+    } catch (e, st) {
+      _log.severe("_startIsolate", e, st);
+    }
   }
 
-  static void _startHandbrakeIsolate(
+  static void _runHandbrake(
       HandbrakeIsolateConfig config, SendPort sendPort) async {
     String relativePath = config.jobEntry.path;
     String filename = path.basenameWithoutExtension(config.jobEntry.fullPath);
 
-    String outputPath = path.join(config.outputDir, path.dirname(relativePath));
+    String outputPath = config.outputDir;
+    if (path.dirname(relativePath) != ".") {
+      outputPath = path.join(config.outputDir, path.dirname(relativePath));
+    }
 
     Directory d = new Directory(outputPath);
     if (!d.existsSync()) {
@@ -116,7 +131,8 @@ class HandbrakeIsolate {
     List<String> args =
         new List<String>.from(config.jobEntry.encoding.toProcessArgs());
 
-    args.addAll(['--json', '-i', config.jobEntry.fullPath, '-o', "$outputPath"]);
+    args.addAll(
+        ['--json', '-i', config.jobEntry.fullPath, '-o', "$outputPath"]);
 
     Process process = await Process.start(config.handbrake, args);
 
@@ -187,14 +203,14 @@ class HandbrakeIsolate {
     String moveTarget = path.join(config.completeDir, config.jobEntry.path);
 
     Directory moveDir = new Directory(path.dirname(moveTarget));
-    if(!(await moveDir.exists())) {
+    if (!(await moveDir.exists())) {
       await moveDir.create(recursive: true);
     }
 
     await inputFile.rename(moveTarget);
 
     Directory sourceDir = new Directory(path.dirname(config.jobEntry.fullPath));
-    if(sourceDir.listSync().isEmpty) {
+    if (sourceDir.path != config.inputDir && sourceDir.listSync().isEmpty) {
       await sourceDir.delete();
     }
 
@@ -218,8 +234,8 @@ class HandbrakeIsolateConfig {
   //Level loggingLevel;
   QueueEntry jobEntry;
 
-  HandbrakeIsolateConfig(this.inputDir, this.outputDir, this.completeDir, this.ffprobe,
-      this.handbrake, this.jobEntry);
+  HandbrakeIsolateConfig(this.inputDir, this.outputDir, this.completeDir,
+      this.ffprobe, this.handbrake, this.jobEntry);
 }
 
 class HandbrakeIsolateProgress {

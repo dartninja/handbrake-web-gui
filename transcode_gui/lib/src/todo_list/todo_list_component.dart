@@ -28,7 +28,7 @@ class TodoListComponent implements OnInit {
   TodoListComponent(this.todoListService);
 
   @override
-  Future<Null> ngOnInit() async {
+  Future<void> ngOnInit() async {
     items = await todoListService.getTodoList();
   }
 

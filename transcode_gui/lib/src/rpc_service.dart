@@ -10,7 +10,17 @@ class RpcService {
   final Logger log = new Logger('RpcService');
 
   Future<dynamic> clientWrapper(Function work) async {
-    final HtmlWebSocketChannel _socket = new HtmlWebSocketChannel.connect('ws://localhost:8080');
+
+    String url = "ws://${window.location.host}/";
+
+    // When running in dev, since I use PHPStorm, the client runs via a different
+    // server than the dartalog server component. This is usually on a 5-digit port,
+    // which theoretically wouldn't be used ina  real deployment.
+    // TODO: Figure out a cleaner way of handling this
+    if (window.location.port.length >= 5) url = "ws://localhost:8080";
+
+
+    final HtmlWebSocketChannel _socket = new HtmlWebSocketChannel.connect(url);
     final  client = new json_rpc.Client(_socket.cast<String>());
     client.listen();
     try {
@@ -39,6 +49,10 @@ class RpcService {
     }
 
     return output;
+  }
+
+  Future<void> clearComplete() async {
+    await clientWrapper((client) => client.sendRequest("clear_complete"));
   }
 
   Future<Map> getEnums() async {

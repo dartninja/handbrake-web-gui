@@ -39,12 +39,12 @@ class JobSettingsComponent implements OnInit {
   }
 
   @override
-  Future<Null> ngOnInit() async {
+  Future<void> ngOnInit() async {
     log.finest("ngOnInit");
     await refresh();
   }
 
-  Future<Null> refresh() async {
+  Future<void> refresh() async {
     log.finest("refresh");
 
     Map enums = await _rpcService.getEnums();

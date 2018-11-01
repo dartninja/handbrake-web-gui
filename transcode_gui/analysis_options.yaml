@@ -4,7 +4,7 @@ analyzer:
     uri_has_not_been_generated: ignore
   # Angular plugin support is in beta. You're welcome to try it and report
   # issues: https://github.com/dart-lang/angular_analyzer_plugin/issues
-  # plugins:
+   #plugins:
     # - angular
 
 # Lint rules and documentation, see http://dart-lang.github.io/linter/lints
@@ -17,3 +17,5 @@ linter:
     - test_types_in_equals
     - unrelated_type_equality_checks
     - valid_regexps
+    - void_checks
+  #- prefer_void_to_null

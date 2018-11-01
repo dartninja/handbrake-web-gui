@@ -3,9 +3,11 @@ import 'queue_entry_status.dart';
 import 'enums/stream_types.dart';
 import 'package:uuid/uuid.dart';
 import 'encoding_settings.dart';
+import 'data/stream_data.dart';
 
 export 'queue_entry_status.dart';
 export 'enums/stream_types.dart';
+
 
 
 class QueueEntry {
@@ -38,23 +40,3 @@ class QueueEntry {
   };
 }
 
-class StreamData {
-  static final Logger _log = new Logger('StreamData');
-  int index;
-  String codec;
-  int width, height;
-  StreamTypes type;
-  String language;
-  int channels;
-
-
-  Map toJson() =>{
-    'index': this.index,
-        'codec': this.codec,
-        'type': type.toString().split(".")[1],
-        'width': width,
-        'height': height,
-        'language': language,
-        'channels': channels
-      };
-}
