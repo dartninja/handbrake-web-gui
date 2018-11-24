@@ -1,45 +1,45 @@
-
+<modal [visible]="showDialog">
 <material-dialog>
-<job-settings></job-settings>
+    <h1 header>{{selectedJob?.path}}</h1>
+    <pre>{{selectedJob}}</pre>
+    <div footer>
+        <material-button autoFocus clear-size (trigger)="showDialog = false">
+            Close
+        </material-button>
+    </div>
 </material-dialog>
+</modal>
 
 
-<material-dialog>
-    {{selectedJob}}
-</material-dialog>
-
-<material-button icon>
-    <material-icon icon="pause"></material-icon>
-</material-button>
-<material-button icon>
-    <material-icon icon="play_arrow"></material-icon>
-</material-button>
-<material-button (trigger)="clear" icon>
-    <material-icon icon="clear_all"></material-icon>
-</material-button>
-<material-button (trigger)="refresh" icon>
-    <material-icon icon="refresh"></material-icon>
-</material-button>
-
+<div *ngIf="items.isEmpty" style="width:100%;">
+    Queue is currently empty
+</div>
 <div *ngIf="items.isNotEmpty" style="width:100%;">
         <div *ngFor="let item of items; let i=index" style="width:100%;">
+
+
+
             <table style="width:100%;">
                 <tr>
-                   <td rowspan="2">
+                   <td rowspan="1" style="width: 64pt;">
                        <material-icon icon="done" *ngIf="item.status=='complete'"></material-icon>
                        <material-icon icon="error" *ngIf="item.status=='issue'"></material-icon>
                        <material-icon icon="timer" *ngIf="item.status=='pending'"></material-icon>
                        <material-spinner *ngIf="item.status=='active'"></material-spinner>
                    </td>
-                    <td><h2>{{item.path}}</h2></td>
-                    <td rowspan="2"><material-button (trigger)="edit(item.id)" icon>
+                    <td>
+                        <h2>{{item.path}}</h2>
+                        {{item.duration}}
+                        {{item.sizeString}}
+                    </td>
+                    <td rowspan="1" style="width: 64pt"><material-button (trigger)="edit(item.id)" icon>
                         <material-icon icon="edit"></material-icon>
                     </material-button><material-button (trigger)="info(item.id)" icon>
                         <material-icon icon="info"></material-icon>
                     </material-button></td>
                 </tr>
                 <tr>
-                    <td>
+                    <td colspan="3">
                         <material-progress [activeProgress]="item.percent"></material-progress>
                     </td>
                 </tr>

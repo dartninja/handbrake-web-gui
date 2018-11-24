@@ -34,7 +34,7 @@ class QueueEntry {
     'duration': duration,
     'size': size,
     'type': type,
-    //'streams': streams.map((StreamData sd) => sd.toJson()).toList(),
+    'streams': streams.map((StreamData sd) => sd.toJson()).toList(),
     'progress': progress,
     'args': encoding.toString(),
   };

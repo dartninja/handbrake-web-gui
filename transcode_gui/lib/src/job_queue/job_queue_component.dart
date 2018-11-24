@@ -24,6 +24,7 @@ import '../job_settings/job_settings_component.dart';
     MaterialExpansionPanelSet,
     MaterialDialogComponent,
     JobSettingsComponent,
+    ModalComponent,
     NgFor,
     NgIf,
   ],
@@ -33,6 +34,8 @@ class JobQueueComponent implements OnInit {
   final Logger log = new Logger('JobQueueComponent');
 
   final RpcService _jobQueueService;
+
+  bool showDialog = false;
 
   List<JobQueueEntry> items = [];
   String newTodo = '';
@@ -49,7 +52,7 @@ class JobQueueComponent implements OnInit {
   Future<void> ngOnInit() async {
     log.finest("ngOnInit");
 
-
+    await refresh();
     var timer = new Timer.periodic(new Duration(seconds: 5), (t) => refresh(), );
   }
 
@@ -59,16 +62,15 @@ class JobQueueComponent implements OnInit {
     items = await _jobQueueService.getJobQueue();
   }
 
-  Future<void> clear() async {
-    await _jobQueueService.clearComplete();
-    await refresh();
+  Future<void> info(String id) async {
+    log.finest("info($id)");
+    selectedJob = items.firstWhere((JobQueueEntry e) => e.id==id);
+    showDialog = true;
   }
 
   Future<void> edit(String id) async {
 
   }
-  Future<void> info(String id) async {
-    log.finest("info($id)");
-    selectedJob = items.firstWhere((JobQueueEntry e) => e.id==id);
-  }
+
+
 }

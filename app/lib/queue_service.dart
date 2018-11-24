@@ -59,7 +59,11 @@ class QueueService {
         final QueueEntry entry = new QueueEntry()
           ..fullPath = e.path
           ..path = e.path.substring(this.inputPath.length + 1)
-          ..name = path.basename(e.path);
+          ..name = path.basename(e.path)
+        ..streams = e.streams
+        ..duration = e.duration
+        ..size = e.size
+        ..type = e.type;
 
         entries.add(entry);
       } catch(e,st) {

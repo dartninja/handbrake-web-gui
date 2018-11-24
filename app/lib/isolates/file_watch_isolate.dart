@@ -11,11 +11,11 @@ import 'package:app/shared.dart';
 class FileWatchIsolate {
   static final Logger _log = new Logger('HandbrakeIsolate');
 
-  StreamController<NewFileEvent> _newFileStreamController =
+  final StreamController<NewFileEvent> _newFileStreamController =
       new StreamController<NewFileEvent>();
   Stream<NewFileEvent> get newFile => _newFileStreamController.stream;
 
-  StreamController<DeleteFileEvent> _deleteFileStreamController =
+  final StreamController<DeleteFileEvent> _deleteFileStreamController =
       new StreamController<DeleteFileEvent>();
   Stream<DeleteFileEvent> get deleteFile => _deleteFileStreamController.stream;
 
@@ -25,6 +25,8 @@ class FileWatchIsolate {
   SendPort _isolateSendPort;
 
   Isolate _isolate;
+
+  static final Map<String, DateTime> filesAlreadyFound = <String, DateTime>{};
 
   FileWatchIsolate(this.watchPath) {
     _isolateReceivePort.listen((dynamic data) {
@@ -36,8 +38,8 @@ class FileWatchIsolate {
         } else if (data is SendPort) {
           _isolateSendPort = data;
         }
-      } catch(e,st) {
-        _log.severe("_isolateReceivePort.listen",e,st);
+      } catch (e, st) {
+        _log.severe("_isolateReceivePort.listen", e, st);
       }
     });
   }
@@ -54,8 +56,8 @@ class FileWatchIsolate {
           ..path = watchPath);
   }
 
-  static final Map<String, StreamSubscription> watchers =
-      <String, StreamSubscription>{};
+//  static final Map<String, StreamSubscription> watchers =
+//      <String, StreamSubscription>{};
 
   static void _startIsolate(FileWatcherIsolateConfig config) async {
     try {
@@ -81,85 +83,118 @@ class FileWatchIsolate {
         await inputDirectory.create(recursive: true);
       }
 
-      watchers[config.path] = inputDirectory
-          .watch()
-          .listen((FileSystemEvent e) => _fileEventHandler(e, config.port));
+//      watchers[config.path] = inputDirectory
+//          .watch()
+//          .listen((FileSystemEvent e) => _fileEventHandler(e, config.port));
 
-      await _crawlFolders(inputDirectory, config.port);
-    } catch(e,st) {
-      _log.severe("_startIsolate",e,st);
-    }
-  }
+      while (true) {
+        await _crawlFolders(inputDirectory, config.port);
 
-  static void _fileEventHandler(FileSystemEvent e, SendPort sendPort) async {
-    try {
-      FileSystemEntityType type = FileSystemEntity.typeSync(e.path);
-      switch (e.type) {
-        case FileSystemEvent.create:
-          switch (type) {
-            case FileSystemEntityType.file:
-              try {
-                NewFileEvent nfe = await _collectMediaInfo(e.path);
-                sendPort.send(nfe);
-              } catch (ex, st) {
-                _log.warning(
-                    "Error while collecting media info for ${e.path}", ex, st);
-              }
-              break;
-            case FileSystemEntityType.directory:
-              Directory d = new Directory(e.path);
-              watchers[e.path] = d
-                  .watch()
-                  .listen((FileSystemEvent e) =>
-                  _fileEventHandler(e, sendPort));
-              break;
-          }
-          break;
-        case FileSystemEvent.delete:
-          switch (type) {
-            case FileSystemEntityType.file:
-              DeleteFileEvent dfe = new DeleteFileEvent();
-              dfe.path = e.path;
-              sendPort.send(dfe);
-              break;
-            case FileSystemEntityType.directory:
-              if (watchers.containsKey(e.path)) {
-                await watchers[e.path].cancel();
-                watchers.remove(e.path);
-              }
-              break;
-          }
-          break;
-        case FileSystemEvent.modify:
-          switch (type) {
-            case FileSystemEntityType.file:
-              try {
-                NewFileEvent nfe = await _collectMediaInfo(e.path);
-                sendPort.send(nfe);
-              } catch (ex, st) {
-                _log.warning(
-                    "Error while collecting media info for ${e.path}", ex, st);
-              }
-              break;
-          }
-          break;
+        sleep(new Duration(seconds: 15));
       }
-    } catch(e,st) {
-      _log.severe("_fileEventHandler",e,st);
+    } catch (e, st) {
+      _log.severe("_startIsolate", e, st);
     }
   }
+
+//  static void _fileEventHandler(FileSystemEvent e, SendPort sendPort) async {
+//    try {
+//      FileSystemEntityType type = FileSystemEntity.typeSync(e.path);
+//      switch (e.type) {
+//        case FileSystemEvent.create:
+//          switch (type) {
+//            case FileSystemEntityType.file:
+//              try {
+//                _log.finest("New file found: ${e.path}");
+//                NewFileEvent nfe = await _collectMediaInfo(e.path);
+//                sendPort.send(nfe);
+//              } catch (ex, st) {
+//                _log.warning(
+//                    "Error while collecting media info for ${e.path}", ex, st);
+//              }
+//              break;
+//            case FileSystemEntityType.directory:
+//              Directory d = new Directory(e.path);
+//              watchers[e.path] = d
+//                  .watch()
+//                  .listen((FileSystemEvent e) =>
+//                  _fileEventHandler(e, sendPort));
+//              break;
+//          }
+//          break;
+//        case FileSystemEvent.delete:
+//          switch (type) {
+//            case FileSystemEntityType.file:
+//              _log.finest("File deleted: ${e.path}");
+//              DeleteFileEvent dfe = new DeleteFileEvent();
+//              dfe.path = e.path;
+//              sendPort.send(dfe);
+//              break;
+//            case FileSystemEntityType.directory:
+//              if (watchers.containsKey(e.path)) {
+//                await watchers[e.path].cancel();
+//                watchers.remove(e.path);
+//              }
+//              break;
+//          }
+//          break;
+//        case FileSystemEvent.modify:
+//          switch (type) {
+//            case FileSystemEntityType.file:
+//              try {
+//                NewFileEvent nfe = await _collectMediaInfo(e.path);
+//                sendPort.send(nfe);
+//              } catch (ex, st) {
+//                _log.warning(
+//                    "Error while collecting media info for ${e.path}", ex, st);
+//              }
+//              break;
+//          }
+//          break;
+//      }
+//    } catch(e,st) {
+//      _log.severe("_fileEventHandler",e,st);
+//    }
+//  }
 
   static Future<void> _crawlFolders(Directory dir, SendPort sendPort) async {
-    await for (FileSystemEntity fse in dir.list()) {
+    _log.finest("_crawlFolders(Directory $dir, SendPort sendPort)");
+    List<String> files = new List<String>.from(filesAlreadyFound.keys);
+
+    for (String filePath in files) {
+      File f = new File(filePath);
+      if (!f.existsSync()) {
+        _log.finest("File gone: $filePath");
+        DeleteFileEvent dfe = new DeleteFileEvent();
+        dfe.path = filePath;
+        sendPort.send(dfe);
+        filesAlreadyFound.remove(filePath);
+      }
+    }
+
+    List<FileSystemEntity> dirFiles = await dir.listSync(recursive: true, followLinks: false);
+
+    dirFiles.sort((FileSystemEntity fse1, FileSystemEntity fse2) => fse1.path.compareTo(fse2.path));
+
+    for (FileSystemEntity fse in dirFiles) {
       if (fse is Directory) {
-        await _crawlFolders(fse, sendPort);
-        watchers[fse.path] = fse
-            .watch()
-            .listen((FileSystemEvent e) => _fileEventHandler(e, sendPort));
+        continue;
+        //await _crawlFolders(fse, sendPort);
+//        watchers[fse.path] = fse
+//            .watch()
+//            .listen((FileSystemEvent e) => _fileEventHandler(e, sendPort));
       } else if (fse is File) {
         try {
+          DateTime lastModified = await fse.lastModified();
+          if (filesAlreadyFound.containsKey(fse.path) &&
+              filesAlreadyFound[fse.path] == lastModified) {
+            // This file is already known of, skip it!
+            continue;
+          }
+          _log.finest("New file found: ${fse.path}");
           NewFileEvent e = await _collectMediaInfo(fse.path);
           sendPort.send(e);
+          filesAlreadyFound[fse.path] = lastModified;
         } catch (e, st) {
           _log.warning(
               "Error while collecting media info for ${fse.path}", e, st);
@@ -187,6 +222,8 @@ class FileWatchIsolate {
       throw new Exception("Error while getting audio stream data: $error");
     } else {
       final String probeResults = result.stdout.toString();
+
+      _log.finest("ffprobe output", probeResults);
 
       Map data = jsonDecode(probeResults);
 

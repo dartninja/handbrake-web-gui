@@ -1,36 +1,41 @@
 FROM ubuntu:cosmic
 
-RUN apt-get -q update
-RUN apt-get install --no-install-recommends -y -q apt-transport-https software-properties-common curl gnupg
-RUN add-apt-repository -y ppa:stebbins/handbrake-releases
-RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
-RUN apt-get -q update
-RUN apt-get install --no-install-recommends -y -q ffmpeg imagemagick ghostscript dart handbrake-cli
+RUN apt-get -q update \
+    && apt-get install --no-install-recommends -y -q apt-transport-https software-properties-common curl gnupg \
+    && add-apt-repository -y ppa:stebbins/handbrake-releases \
+    && curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list \
+    && apt-get -q update \
+    && apt-get install --no-install-recommends -y -q ffmpeg imagemagick ghostscript dart handbrake-cli \
+    && apt-get clean
 
-ENV PATH="/usr/lib/dart/bin:${PATH}:${HOME}/.pub-cache/bin"
+ENV PATH="/usr/lib/dart/bin:${PATH}:/root/.pub-cache/bin"
 
-ADD app/pubspec.yaml /app/pubspec.yaml
-
-RUN cd /app && pub get
-
-ADD app/ /app/
-
-ADD transcode_gui/pubspec.yaml /build/transcode_gui/pubspec.yaml
-
-RUN cd /build/transcode_gui && pub get
-
-ADD . /build
-
-RUN  pub global activate webdev
-RUN cd /build/transcode_gui && pub global run webdev build --release && mv /build/transcode_gui/build/ /app/web/
-RUN rm /build -R
+RUN pub global activate webdev
 
 WORKDIR /app
+
+COPY app/pubspec.yaml /app/pubspec.yaml
+
+RUN pub get
+
+WORKDIR /build
+
+COPY transcode_gui/pubspec.yaml /build/pubspec.yaml
+
+RUN pub get
+
+COPY transcode_gui/ /build/
+
+RUN webdev build --release --output=web:/app/web/ && cd / && rm /build -R
+
+WORKDIR /app
+
+COPY app/ /app/
 
 EXPOSE 8080
 
 VOLUME /app/data
 
-CMD []
-ENTRYPOINT ["/usr/bin/dart", "bin/server.dart", "--data-dir=/app/data", "--web-dir=/app/web"]
+CMD [""]
+ENTRYPOINT ["/usr/bin/dart", "/app/bin/server.dart", "--data-dir=/app/data", "--web-dir=/app/web"]

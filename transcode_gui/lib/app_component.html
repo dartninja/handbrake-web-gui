@@ -1,1 +1,23 @@
-<job-queue></job-queue>
+<header class="material-header">
+    <div class="material-header-row">
+        <span class="material-header-title">Transcode Queue</span>
+        <div class="material-spacer"></div>
+
+        <nav class="material-navigation">
+            <material-button icon>
+                <material-icon icon="pause"></material-icon>
+            </material-button>
+            <material-button icon>
+                <material-icon icon="play_arrow"></material-icon>
+            </material-button>
+            <material-button (trigger)="clear" icon>
+                <material-icon icon="clear_all"></material-icon>
+            </material-button>
+            <material-button (trigger)="refresh" icon>
+                <material-icon icon="refresh"></material-icon>
+            </material-button>
+        </nav>
+    </div>
+</header>
+
+<job-queue #job_queue></job-queue>
