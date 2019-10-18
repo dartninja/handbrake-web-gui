@@ -1,3 +1,10 @@
 :host {
     /* This is equivalent of the 'body' selector of a page. */
 }
+div#body {
+    margin-top:64px;
+}
+header {
+    position: fixed !important;
+    top:0;
+}

@@ -21,7 +21,6 @@ main(List<String> args) async {
 
   Logger.root.onRecord.listen(logToConsole);
 
-
   var parser = new ArgParser()
     ..addOption('port', abbr: 'p', defaultsTo: '8080')
     ..addOption('data-dir', abbr: 'd')
@@ -45,46 +44,44 @@ main(List<String> args) async {
   }
 
   String dataDir = result["data-dir"];
-  if((dataDir??"").isEmpty) {
+  if ((dataDir ?? "").isEmpty) {
     stdout.writeln('data-dir is required');
     exitCode = 64;
     return;
   }
 
   String inputDir = result["input-dir"];
-  if((inputDir??"").isEmpty) {
+  if ((inputDir ?? "").isEmpty) {
     stdout.writeln('input-dir is required');
     exitCode = 64;
     return;
   }
-  if(path.isRelative(inputDir)) {
+  if (path.isRelative(inputDir)) {
     inputDir = path.join(dataDir, inputDir);
   }
 
   String completeDir = result["complete-dir"];
-  if((completeDir??"").isEmpty) {
+  if ((completeDir ?? "").isEmpty) {
     stdout.writeln('complete-dir is required');
     exitCode = 64;
     return;
   }
-  if(path.isRelative(completeDir)) {
+  if (path.isRelative(completeDir)) {
     completeDir = path.join(dataDir, completeDir);
   }
 
-
   String outputDir = result["output-dir"];
-  if((outputDir??"").isEmpty) {
+  if ((outputDir ?? "").isEmpty) {
     stdout.writeln('output-dir is required');
     exitCode = 64;
     return;
   }
-  if(path.isRelative(outputDir)) {
+  if (path.isRelative(outputDir)) {
     outputDir = path.join(dataDir, outputDir);
   }
 
-
   String webDir = result["web-dir"];
-  if((webDir??"").isEmpty) {
+  if ((webDir ?? "").isEmpty) {
     stdout.writeln('web-dir is required');
     exitCode = 64;
     return;
@@ -94,18 +91,24 @@ main(List<String> args) async {
   String ffprobe = result["ffprobe"];
   String handbrake = result["handbrake-cli"];
 
-  QueueService service = new QueueService(inputDir, outputDir, completeDir, ffprobe, handbrake);
-  await service.init();
+  File globalSettingsFile = new File(path.join(dataDir,settingsFileName));
+  Map<String,dynamic> globalSettings = <String,dynamic>{};
+  if(globalSettingsFile.existsSync()) {
+    String text = globalSettingsFile.readAsStringSync();
+    globalSettings = jsonDecode(text);
+  }
 
+  QueueService service =
+      new QueueService(inputDir, outputDir, completeDir, ffprobe, handbrake, globalSettings);
+  await service.init();
 
   var socketHandler = webSocketHandler((webSocket) async {
     var server = new json_rpc.Server(webSocket.cast<String>());
 
-
     server.registerMethod("get_queue", () {
       try {
         return service.entries;
-      } catch(e,st) {
+      } catch (e, st) {
         throw new json_rpc.RpcException(1, e.message);
       }
     });
@@ -117,7 +120,7 @@ main(List<String> args) async {
     server.registerMethod("get_enums", () {
       try {
         return {"encoders": getEncoders()};
-      } catch(e,st) {
+      } catch (e, st) {
         throw new json_rpc.RpcException(1, e.message);
       }
     });
@@ -127,21 +130,20 @@ main(List<String> args) async {
         String data = params.getString("data");
         Map json = jsonDecode(data);
         EncodingSettings encodingSettings = new EncodingSettings.fromJson(json);
-      } catch(e,st) {
+      } catch (e, st) {
         throw new json_rpc.RpcException(1, e.message);
       }
     });
 
     server.listen();
-
   });
 
   print("Hosting site files from $webDir");
-  var staticHandler = createStaticHandler(webDir, defaultDocument: "index.html");
-  
-  
+  var staticHandler =
+      createStaticHandler(webDir, defaultDocument: "index.html");
+
   var handler = (Request request) {
-    if(request.headers.containsKey("sec-websocket-version")) {
+    if (request.headers.containsKey("sec-websocket-version")) {
       return socketHandler(request);
     } else {
       return staticHandler(request);
@@ -150,11 +152,4 @@ main(List<String> args) async {
 
   var shelfServer = await io.serve(handler, InternetAddress.anyIPv6, port);
   print('Serving at http://${shelfServer.address.host}:${shelfServer.port}');
-
-
 }
-
-
-
-
-

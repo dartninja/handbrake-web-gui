@@ -24,18 +24,17 @@ class JobSettingsComponent implements OnInit {
 
   JobSettings settings;
 
-  JobSettingsComponent (this._rpcService);
+  JobSettingsComponent(this._rpcService);
 
   SelectionOptions<String> encoders = new StringSelectionOptions([]);
 
   SelectionModel<String> encoderSelection = new SingleSelectionModel();
 
   String get encoder {
-    if(encoderSelection.isEmpty)
+    if (encoderSelection.isEmpty)
       return "Encoder";
     else
       return encoderSelection.selectedValues.first;
-
   }
 
   @override
@@ -51,6 +50,4 @@ class JobSettingsComponent implements OnInit {
     List<String> encoders = new List<String>.from(enums["encoders"]);
     this.encoders = new StringSelectionOptions(encoders);
   }
-
-
 }

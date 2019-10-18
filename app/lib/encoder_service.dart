@@ -1,3 +1,1 @@
-class EncoderService {
-
-}
+class EncoderService {}

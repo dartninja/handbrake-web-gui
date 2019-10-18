@@ -40,20 +40,21 @@ class JobQueueComponent implements OnInit {
   List<JobQueueEntry> items = [];
   String newTodo = '';
 
-  Map<String,bool> expanded = <String,bool>{};
+  Map<String, bool> expanded = <String, bool>{};
 
   JobQueueEntry selectedJob;
 
-  JobQueueComponent (this._jobQueueService);
-
-
+  JobQueueComponent(this._jobQueueService);
 
   @override
   Future<void> ngOnInit() async {
     log.finest("ngOnInit");
 
     await refresh();
-    var timer = new Timer.periodic(new Duration(seconds: 5), (t) => refresh(), );
+    var timer = new Timer.periodic(
+      new Duration(seconds: 5),
+      (t) => refresh(),
+    );
   }
 
   Future<void> refresh() async {
@@ -64,13 +65,9 @@ class JobQueueComponent implements OnInit {
 
   Future<void> info(String id) async {
     log.finest("info($id)");
-    selectedJob = items.firstWhere((JobQueueEntry e) => e.id==id);
+    selectedJob = items.firstWhere((JobQueueEntry e) => e.id == id);
     showDialog = true;
   }
 
-  Future<void> edit(String id) async {
-
-  }
-
-
+  Future<void> edit(String id) async {}
 }

@@ -10,9 +10,16 @@ import 'package:angular_components/angular_components.dart';
 
 @Component(
   selector: 'my-app',
-  styleUrls: ['app_component.css','package:angular_components/app_layout/layout.scss.css'],
+  styleUrls: [
+    'app_component.css',
+    'package:angular_components/app_layout/layout.scss.css'
+  ],
   templateUrl: 'app_component.html',
-  directives: [JobQueueComponent, MaterialButtonComponent, MaterialIconComponent],
+  directives: [
+    JobQueueComponent,
+    MaterialButtonComponent,
+    MaterialIconComponent
+  ],
   providers: [const ClassProvider(RpcService)],
 )
 class AppComponent {
@@ -32,10 +39,7 @@ class AppComponent {
     await refresh();
   }
 
-
-
   Future<void> refresh() async {
     jobQueue.refresh();
   }
-
 }

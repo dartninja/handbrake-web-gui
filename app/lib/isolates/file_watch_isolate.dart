@@ -7,6 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:app/data/stream_data.dart';
 import 'package:app/shared.dart';
+import '../data/language.dart';
 
 class FileWatchIsolate {
   static final Logger _log = new Logger('HandbrakeIsolate');
@@ -172,9 +173,11 @@ class FileWatchIsolate {
       }
     }
 
-    List<FileSystemEntity> dirFiles = await dir.listSync(recursive: true, followLinks: false);
+    List<FileSystemEntity> dirFiles =
+        await dir.listSync(recursive: true, followLinks: false);
 
-    dirFiles.sort((FileSystemEntity fse1, FileSystemEntity fse2) => fse1.path.compareTo(fse2.path));
+    dirFiles.sort((FileSystemEntity fse1, FileSystemEntity fse2) =>
+        fse1.path.compareTo(fse2.path));
 
     for (FileSystemEntity fse in dirFiles) {
       if (fse is Directory) {
@@ -192,7 +195,14 @@ class FileWatchIsolate {
             continue;
           }
           _log.finest("New file found: ${fse.path}");
-          NewFileEvent e = await _collectMediaInfo(fse.path);
+          NewFileEvent e;
+          if (path.basename(fse.path).toLowerCase() == settingsFileName) {
+            e = new NewFileEvent(fse.path);
+            e.type = "json";
+            e.size = await fse.length();
+          } else {
+            e = await _collectMediaInfo(fse.path);
+          }
           sendPort.send(e);
           filesAlreadyFound[fse.path] = lastModified;
         } catch (e, st) {
@@ -215,7 +225,8 @@ class FileWatchIsolate {
       '-print_format',
       'json',
       '-show_format',
-      '-show_streams'
+      '-show_streams',
+      '-show_chapters'
     ]);
     if (result.exitCode != 0) {
       final String error = result.stderr.toString();
@@ -234,6 +245,8 @@ class FileWatchIsolate {
       output.duration = num.parse(format["duration"]);
       output.size = num.parse(format["size"]);
 
+      output.chapters = data["chapters"].length;
+
       for (Map stream in streams) {
         StreamData streamData = new StreamData()
           ..codec = stream["codec_name"]
@@ -241,6 +254,7 @@ class FileWatchIsolate {
 
         switch (stream["codec_type"]) {
           case "video":
+            streamData.profile= stream["profile"];
             streamData.width = stream["width"];
             streamData.height = stream["height"];
             streamData.type = StreamTypes.video;
@@ -248,10 +262,13 @@ class FileWatchIsolate {
           case "audio":
             streamData.type = StreamTypes.audio;
             streamData.channels = stream["channels"];
+            streamData.profile= stream["profile"];
+            streamData.language = stream["tags"]["language"]??stream["tags"]["LANGUAGE"]??Language.Undetermined;
+            streamData.duration = stream["tags"]["DURATION-eng"];
             break;
           case "subtitle":
             streamData.type = StreamTypes.subtitle;
-            streamData.language = stream["tags"]["language"];
+            streamData.language = stream["tags"]["language"]??stream["tags"]["LANGUAGE"]??Language.Undetermined;
             break;
         }
 
@@ -269,8 +286,9 @@ class FileWatcherIsolateConfig {
 
 class NewFileEvent {
   String path, type;
-  num duration, size;
+  num duration, size, chapters;
   List<StreamData> streams = <StreamData>[];
+
   NewFileEvent(this.path);
 }
 

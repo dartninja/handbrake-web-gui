@@ -1,6 +1,1 @@
-enum QueueEntryStatus {
-  pending,
-  active,
-  complete,
-  issue
-}
+enum QueueEntryStatus { pending, active, complete, issue }

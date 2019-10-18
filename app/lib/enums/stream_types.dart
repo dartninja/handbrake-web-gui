@@ -1,5 +1,1 @@
-enum StreamTypes {
-  video,
-  audio,
-  subtitle
-}
+enum StreamTypes { video, audio, subtitle }

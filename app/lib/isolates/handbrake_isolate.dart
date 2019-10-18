@@ -113,89 +113,109 @@ class HandbrakeIsolate {
     String relativePath = config.jobEntry.path;
     String filename = path.basenameWithoutExtension(config.jobEntry.fullPath);
 
-    String outputPath = config.outputDir;
+    String outputDir = config.outputDir;
     if (path.dirname(relativePath) != ".") {
-      outputPath = path.join(config.outputDir, path.dirname(relativePath));
+      outputDir = path.join(config.outputDir, path.dirname(relativePath));
     }
 
-    Directory d = new Directory(outputPath);
+    Directory d = new Directory(outputDir);
     if (!d.existsSync()) {
       await d.create(recursive: true);
     }
 
-    outputPath = path.join(outputPath, "$filename.mkv");
+    _log.info("Encoding to destination: $outputDir");
 
-    _log.info("Encoding to detination: $outputPath");
+    List<EncoderJob> jobs = config.jobEntry.getEncoderJobs();
 
-    List<String> args =
-        new List<String>.from(config.jobEntry.encoding.toProcessArgs());
+    HandbrakeIsolateComplete complete =
+        new HandbrakeIsolateComplete(config.jobEntry.id);
 
-    args.addAll(
-        ['--json', '-i', config.jobEntry.fullPath, '-o', "$outputPath"]);
+    HandbrakeIsolateResult output = new HandbrakeIsolateResult();
 
-    Process process = await Process.start(config.handbrake, args);
+    for (EncoderJob job in jobs) {
+      List<String> args = new List<String>.from(job.args);
 
-    StringBuffer errorBuffer = new StringBuffer();
-    StringBuffer outputBuffer = new StringBuffer();
-    String buffer = "";
-    HandbrakeIsolateProgress progress =
-        new HandbrakeIsolateProgress(config.jobEntry.id);
+      String outputPath;
+      if (jobs.length > 1) {
+        outputPath =
+            path.join(outputDir, "$filename - ${jobs.indexOf(job) + 1}.mkv");
+      } else {
+        outputPath = path.join(outputDir, "$filename.mkv");
+      }
 
-    process.stdout.transform(utf8.decoder).listen((String data) {
-      //_log.finest(data);
-      outputBuffer.write(data);
-      try {
-        buffer = buffer + data;
+      args.addAll(
+          ['--json', '-i', config.jobEntry.fullPath, '-o', "$outputPath"]);
 
-        int start = buffer.indexOf("Version: {");
-        int end = buffer.indexOf("}", buffer.indexOf("}") + 1) + 1;
-        if (start >= 0 && end > 0) {
-          start += 9;
-          String snippet = buffer.substring(start, end);
-          Map json = jsonDecode(snippet);
-          _log.fine("Succesfully decoded json data: $buffer");
-          buffer = buffer.substring(end);
-        }
+      Process process = await Process.start(config.handbrake, args);
 
-        start = buffer.indexOf("Progress: {");
-        end = buffer.indexOf("}", buffer.indexOf("}") + 1) + 1;
-        while (start >= 0 && end > 0) {
-          start += 10;
-          String snippet = buffer.substring(start, end);
-          Map json = jsonDecode(snippet);
-          _log.fine("Succesfully decoded json data: $buffer");
-          buffer = buffer.substring(end);
+      StringBuffer errorBuffer = new StringBuffer();
+      StringBuffer outputBuffer = new StringBuffer();
+      String buffer = "";
+      HandbrakeIsolateProgress progress =
+          new HandbrakeIsolateProgress(config.jobEntry.id);
+
+      process.stdout.transform(utf8.decoder).listen((String data) {
+        //_log.finest(data);
+        outputBuffer.write(data);
+        try {
+          buffer = buffer + data;
+
+          int start = buffer.indexOf("Version: {");
+          int end = buffer.indexOf("}", buffer.indexOf("}") + 1) + 1;
+          if (start >= 0 && end > 0) {
+            start += 9;
+            String snippet = buffer.substring(start, end);
+            Map json = jsonDecode(snippet);
+            _log.fine("Succesfully decoded json data: $buffer");
+            buffer = buffer.substring(end);
+          }
+
           start = buffer.indexOf("Progress: {");
           end = buffer.indexOf("}", buffer.indexOf("}") + 1) + 1;
-          switch (json["State"]) {
-            case "WORKING":
-              progress.progress = json["Working"]["Progress"];
-              progress.rate = json["Working"]["Rate"];
-              progress.remaining = new Duration(
-                  hours: json["Working"]["Hours"],
-                  minutes: json["Working"]["Minutes"]);
-              sendPort.send(progress);
-              break;
-            case "WORKDONE":
-              HandbrakeIsolateComplete complete =
-                  new HandbrakeIsolateComplete(config.jobEntry.id);
-              if (json["WorkDone"]["Error"] != 0) {
-                complete.error = errorBuffer.toString();
-              }
-              sendPort.send(complete);
-              break;
+          while (start >= 0 && end > 0) {
+            start += 10;
+            String snippet = buffer.substring(start, end);
+            Map json = jsonDecode(snippet);
+            _log.fine("Succesfully decoded json data: $buffer");
+            buffer = buffer.substring(end);
+            start = buffer.indexOf("Progress: {");
+            end = buffer.indexOf("}", buffer.indexOf("}") + 1) + 1;
+            switch (json["State"]) {
+              case "WORKING":
+                num calculation = (1.0 / jobs.length) * jobs.indexOf(job);
+                calculation +=
+                    (1.0 / jobs.length) * json["Working"]["Progress"];
+                progress.progress = calculation;
+                progress.rate = json["Working"]["Rate"];
+
+                progress.remaining = new Duration(
+                    hours: json["Working"]["Hours"],
+                    minutes: json["Working"]["Minutes"]);
+                sendPort.send(progress);
+                break;
+              case "WORKDONE":
+                if (json["WorkDone"]["Error"] != 0) {
+                  complete.error += errorBuffer.toString() + "\r\n";
+                }
+                if (job == jobs.last) {
+                  sendPort.send(complete);
+                }
+                break;
+            }
           }
+        } catch (e, st) {
+          _log.fine("Unable to decode json data: $buffer");
         }
-      } catch (e, st) {
-        _log.fine("Unable to decode json data: $buffer");
-      }
-    });
+      });
 
-    process.stderr.transform(utf8.decoder).listen((String data) {
-      errorBuffer.write(data);
-    });
+      process.stderr.transform(utf8.decoder).listen((String data) {
+        errorBuffer.write(data);
+      });
 
-    int exitCode = await process.exitCode;
+      int exitCode = await process.exitCode;
+
+      output.error += errorBuffer.toString() + "/r/n";
+    }
 
     File inputFile = new File(config.jobEntry.fullPath);
 
@@ -213,11 +233,6 @@ class HandbrakeIsolate {
       await sourceDir.delete();
     }
 
-    HandbrakeIsolateResult output = new HandbrakeIsolateResult();
-
-    output.error = errorBuffer.toString();
-    String outputString = outputPath.toString();
-
     if (exitCode != 0) {
     } else {}
     //return output;
@@ -225,7 +240,7 @@ class HandbrakeIsolate {
 }
 
 class HandbrakeIsolateResult {
-  String error;
+  String error = "";
 }
 
 class HandbrakeIsolateConfig {
@@ -248,6 +263,6 @@ class HandbrakeIsolateProgress {
 
 class HandbrakeIsolateComplete {
   String jobId;
-  String error;
+  String error = "";
   HandbrakeIsolateComplete(this.jobId);
 }
