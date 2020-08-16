@@ -10,11 +10,11 @@ import "package:json_rpc_2/json_rpc_2.dart" as json_rpc;
 import "package:stream_channel/stream_channel.dart";
 import "package:web_socket_channel/io.dart";
 import 'package:shelf_web_socket/shelf_web_socket.dart';
-import 'package:app/server.dart';
+import 'package:parkingbrake_server/server.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:shelf_static/shelf_static.dart';
-import 'package:app/shared.dart';
+import 'package:parkingbrake_server/shared.dart';
 
 main(List<String> args) async {
   Logger.root.level = Level.ALL;
@@ -26,7 +26,7 @@ main(List<String> args) async {
     ..addOption('data-dir', abbr: 'd')
     ..addOption('web-dir', abbr: 'w', defaultsTo: 'web')
     ..addOption('input-dir', abbr: 'i', defaultsTo: "input")
-    ..addOption('complete-dir', abbr: 'c', defaultsTo: "complete")
+    ..addOption('trash-dir', abbr: 'c', defaultsTo: "trash")
     ..addOption('output-dir', abbr: 'o', defaultsTo: "output")
     ..addOption('ffprobe', defaultsTo: 'ffprobe')
     ..addOption('handbrake-cli', defaultsTo: 'HandBrakeCLI');
@@ -60,14 +60,14 @@ main(List<String> args) async {
     inputDir = path.join(dataDir, inputDir);
   }
 
-  String completeDir = result["complete-dir"];
-  if ((completeDir ?? "").isEmpty) {
-    stdout.writeln('complete-dir is required');
+  String trashDir = result["trash-dir"];
+  if ((trashDir ?? "").isEmpty) {
+    stdout.writeln('trash-dir is required');
     exitCode = 64;
     return;
   }
-  if (path.isRelative(completeDir)) {
-    completeDir = path.join(dataDir, completeDir);
+  if (path.isRelative(trashDir)) {
+    trashDir = path.join(dataDir, trashDir);
   }
 
   String outputDir = result["output-dir"];
@@ -99,7 +99,7 @@ main(List<String> args) async {
   }
 
   QueueService service =
-      new QueueService(inputDir, outputDir, completeDir, ffprobe, handbrake, globalSettings);
+      new QueueService(inputDir, outputDir, trashDir, ffprobe, handbrake, globalSettings);
   await service.init();
 
   var socketHandler = webSocketHandler((webSocket) async {

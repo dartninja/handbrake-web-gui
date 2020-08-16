@@ -10,19 +10,7 @@ enum Encoders {
   VP9,
   theora
 }
-//
-//enum Mixdown {
-//  mono,
-//  left_only,
-//  right_only,
-//  stereo,
-//  dpl1,
-//  dpl2,
-//  5point1,
-//  6point1,
-//  7point1,
-//  5_2_lfe,
-//}
+
 Encoders parseEncoder(String input) => Encoders.values
     .firstWhere((Encoders e) => e.toString().split(".")[1] == input);
 

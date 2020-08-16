@@ -9,7 +9,7 @@ import 'package:angular_components/angular_components.dart';
 // Components info: https://webdev.dartlang.org/components
 
 @Component(
-  selector: 'my-app',
+  selector: 'my-server',
   styleUrls: [
     'app_component.css',
     'package:angular_components/app_layout/layout.scss.css'

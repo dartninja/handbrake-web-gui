@@ -1,13 +1,21 @@
+import 'package:parkingbrake_server/enums/audio_encoders.dart';
+import 'package:parkingbrake_server/enums/mixdowns.dart';
+
 import 'enums/encoders.dart';
 import 'enums/encoder_preset.dart';
 
 class EncodingSettings {
-  Encoders encoder = Encoders.x265_10bit;
-  EncoderPreset preset = EncoderPreset.slow;
+  Encoders encoder = Encoders.x264;
+  EncoderPreset preset = EncoderPreset.medium;
+
+  AudioEncoders audioEncoder = AudioEncoders.opus;
+  Mixdowns mixdown = Mixdowns.s7point1;
 
   bool twoPass = true;
+  bool decomb = true;
+  bool detelecine = true;
 
-  int width = 0, height = 0, quality = 18;
+  int width = 0, height = 0, quality = 24, audioQuality = 8;
 
   EncodingSettings();
 
@@ -30,13 +38,27 @@ class EncodingSettings {
         case "two_pass":
           twoPass = data[key].toString()=="true";
           break;
+        case "decomb":
+          decomb = data[key].toString()=="true";
+          break;
+        case "detelecine":
+          detelecine = data[key].toString()=="true";
+          break;
         case "height":
           height = int.parse(data[key].toString());
           break;
         case "width":
           width = int.parse(data[key].toString());
           break;
-
+        case "audio_encoder":
+          this.audioEncoder = parseAudioEncoder(data[key].toString());
+          break;
+        case "audio_quality":
+          audioQuality = int.parse(data[key].toString());
+          break;
+        case "mixdown":
+          mixdown = parseMixdown(data[key].toString());
+          break;
       }
     }
   }
@@ -52,6 +74,13 @@ class EncodingSettings {
 
   List<String> toProcessArgs() {
     List<String> output = <String>[];
+
+    String mixdownString = this.mixdown.toString().split(".")[1];
+    if(mixdownString.startsWith("s")) {
+      // Enums can't start with a number, so I prefixed the surround mixes with s,
+      // this strips that s out before sending it to handbrake
+      mixdownString = mixdownString.substring(1);
+    }
 
     output.addAll([
       '--min-duration',
@@ -69,26 +98,28 @@ class EncodingSettings {
       quality.toString(),
       '--vfr',
       '--aencoder',
-      'opus',
-//    'copy',
-//    '--audio-copy-mask',
-//    'aac,mp3',
-//    '--audio-fallback',
-//    'opus',
+      this.audioEncoder.toString().split(".")[1],
       '--mixdown',
-      '5_2_lfe',
+      mixdownString,
       '--aq',
-      '8',
+      audioQuality.toString(),
       '--auto-anamorphic',
       '--no-hqdn3d',
       '--no-nlmeans',
       '--no-unsharp',
       '--no-lapsharp',
       '--no-deblock',
-      '--comb-detect',
-      '--decomb',
-      '--detelecine',
+
     ]);
+
+    if (decomb) {
+      output.add('--decomb');
+    }
+    if (detelecine) {
+      output.add('--comb-detect');
+      output.add('--detelecine');
+    }
+
 
     if (twoPass) {
       output.add('--two-pass');

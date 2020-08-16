@@ -1,5 +1,5 @@
 import 'package:angular/angular.dart';
-import 'package:transcode_gui/app_component.template.dart' as ng;
+import 'package:parkingbrake_gui/app_component.template.dart' as ng;
 import 'package:logging/logging.dart';
 
 void main() {

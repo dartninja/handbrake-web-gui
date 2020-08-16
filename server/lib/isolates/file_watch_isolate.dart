@@ -5,8 +5,8 @@ import 'dart:io';
 import '../enums/stream_types.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
-import 'package:app/data/stream_data.dart';
-import 'package:app/shared.dart';
+import 'package:parkingbrake_server/data/stream_data.dart';
+import 'package:parkingbrake_server/shared.dart';
 import '../data/language.dart';
 
 class FileWatchIsolate {

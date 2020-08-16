@@ -6,13 +6,13 @@ import 'package:path/path.dart' as path;
 import 'package:logging/logging.dart';
 import 'isolates/handbrake_isolate.dart';
 import 'isolates/file_watch_isolate.dart';
-import 'package:app/shared.dart';
+import 'package:parkingbrake_server/shared.dart';
 import 'dart:isolate';
 
 class QueueService {
   static final Logger _log = new Logger('QueueService');
 
-  final String inputPath, outputPath, completePath;
+  final String inputPath, outputPath, trashPath;
   final String ffprobePath;
   final String handbrakePath;
 
@@ -22,7 +22,7 @@ class QueueService {
   final Map<String, Map> settings = <String, Map>{};
   final List<QueueEntry> entries = <QueueEntry>[];
 
-  QueueService(this.inputPath, this.outputPath, this.completePath,
+  QueueService(this.inputPath, this.outputPath, this.trashPath,
       this.ffprobePath, this.handbrakePath, this.globalSettings) {
     inputDir = new Directory(this.inputPath);
     if (!inputDir.existsSync()) {
@@ -176,7 +176,7 @@ class QueueService {
     QueueEntry nextEntry = getNextQueueEntry();
     if (nextEntry == null) return null;
 
-    return new HandbrakeIsolateConfig(inputPath, outputPath, completePath,
+    return new HandbrakeIsolateConfig(inputPath, outputPath, trashPath,
         ffprobePath, handbrakePath, nextEntry);
   }
 

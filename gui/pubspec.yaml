@@ -1,0 +1,21 @@
+name: parkingbrake_gui
+description: A gui to be served and interact with the parkingbrake server
+# version: 0.1.0-beta
+# homepage: https://github.com/sanmadjack/parkingbrake
+# author: Matthew <sanmadjack@gmail.com>
+
+environment:
+  sdk: '>=2.0.0 <3.0.0'
+
+dependencies:
+  angular: any
+  angular_components: any
+  json_rpc_2: any
+  logging: any
+
+dev_dependencies:
+  angular_test: any
+  build_runner: any
+  build_test: any
+  build_web_compilers: any
+  test: any

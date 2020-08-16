@@ -5,7 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:app/shared.dart';
+import 'package:parkingbrake_server/shared.dart';
 
 typedef HandbrakeIsolateConfig GetNextJobFunction();
 
@@ -219,7 +219,7 @@ class HandbrakeIsolate {
 
     File inputFile = new File(config.jobEntry.fullPath);
 
-    String moveTarget = path.join(config.completeDir, config.jobEntry.path);
+    String moveTarget = path.join(config.trashDir, config.jobEntry.path);
 
     Directory moveDir = new Directory(path.dirname(moveTarget));
     if (!(await moveDir.exists())) {
@@ -244,11 +244,11 @@ class HandbrakeIsolateResult {
 }
 
 class HandbrakeIsolateConfig {
-  String inputDir, outputDir, completeDir, ffprobe, handbrake;
+  String inputDir, outputDir, trashDir, ffprobe, handbrake;
   //Level loggingLevel;
   QueueEntry jobEntry;
 
-  HandbrakeIsolateConfig(this.inputDir, this.outputDir, this.completeDir,
+  HandbrakeIsolateConfig(this.inputDir, this.outputDir, this.trashDir,
       this.ffprobe, this.handbrake, this.jobEntry);
 }
 

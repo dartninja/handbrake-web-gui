@@ -1,15 +1,15 @@
-name: app
-description: A web server built using the shelf package.
-# version: 1.0.0
-# homepage: https://www.example.com
-# author: Matthew <email@example.com>
+name: parkingbrake_server
+description: A web server that performs transcoding via Handbrake
+# version: 0.1.0-beta
+# homepage: https://github.com/sanmadjack/parkingbrake
+# author: Matthew <sanmadjack@gmail.com>
 
 environment:
   sdk: '>=2.0.0 <3.0.0'
 
 dependencies:
-  args: ^1.4.2
-  shelf: ^0.7.2
+  args: any
+  shelf: any
   sqlite2: any
   json_rpc_2: any
   web_socket_channel: any

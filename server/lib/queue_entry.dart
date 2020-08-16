@@ -24,7 +24,10 @@ class QueueEntry {
 
   int chapters;
 
+  int maxHeight = -1;
+
   int chapterSplit = 0, chapterStart = 0, chapterEnd = 0;
+  List<int> chapterSplits = <int>[];
 
   bool flipSubtitles = false, detectHdSubAudioTrack = false;
 
@@ -48,7 +51,8 @@ class QueueEntry {
 
     if (this.chapters > 0) {
       if (chapterSplit > 0) {
-        int start = 1, lastChapter = this.chapters;
+        int start = 1,
+            lastChapter = this.chapters;
         if (this.chapterEnd > 0 && this.chapterEnd <= this.chapters) {
           lastChapter = this.chapterEnd;
         }
@@ -70,6 +74,51 @@ class QueueEntry {
 
           start = end + 1;
         }
+      } else if(chapterSplits.isNotEmpty) {
+
+        int start = 1,
+            lastChapter = this.chapters;
+        if (this.chapterEnd > 0 && this.chapterEnd <= this.chapters) {
+          lastChapter = this.chapterEnd;
+        }
+
+        if (this.chapterStart > 0) {
+          start = this.chapterStart;
+        }
+
+        for(int i = 0; i < this.chapterSplits.length; i++) {
+          int splitPoint = this.chapterSplits[i];
+
+          if(splitPoint < start) {
+            continue;
+          }
+
+          int end = splitPoint;
+
+          if(end > lastChapter) {
+            end = lastChapter;
+          }
+
+          EncoderJob job = _prepareEncoderJob();
+          job.args.add("--chapters");
+          job.args.add("$start-$end");
+          output.add(job);
+
+          start = end + 1;
+
+          if(end==lastChapter) {
+            break;
+          }
+        }
+
+        if(start<=lastChapter) {
+          EncoderJob job = _prepareEncoderJob();
+          job.args.add("--chapters");
+          job.args.add("$start-$lastChapter");
+          output.add(job);
+        }
+
+
       } else {
         final EncoderJob job = _prepareEncoderJob();
 
@@ -163,6 +212,10 @@ class QueueEntry {
       output.args.add(selectedStreams.join(","));
     }
 
+    if(this.maxHeight!=-1) {
+      output.args.add("--maxHeight ${this.maxHeight}");
+    }
+    
     return output;
   }
 
@@ -202,6 +255,11 @@ class QueueEntry {
         case "chapter_split":
           this.chapterSplit = int.parse(data[key].toString());
           break;
+        case "chapter_splits":
+          for(dynamic value in data[key]) {
+            this.chapterSplits.add(int.parse(value.toString()));
+          }
+          break;
         case "subtitle_languages":
           //this = data[key]?.toString()?.toLowerCase() == "true";
           break;
@@ -220,6 +278,9 @@ class QueueEntry {
               data[key]?.toString()?.toLowerCase() == "true";
           break;
         case "files":
+          break;
+        case "max_height":
+          this.maxHeight = int.parse(data[key].toString());
           break;
         default:
           _log.warning("Unknown setting: $key");
