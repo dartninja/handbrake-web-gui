@@ -166,7 +166,7 @@ class HandbrakeIsolate {
             start += 9;
             String snippet = buffer.substring(start, end);
             Map json = jsonDecode(snippet);
-            _log.fine("Succesfully decoded json data: $buffer");
+            //_log.fine("Successfully decoded json data: $buffer");
             buffer = buffer.substring(end);
           }
 
@@ -176,7 +176,7 @@ class HandbrakeIsolate {
             start += 10;
             String snippet = buffer.substring(start, end);
             Map json = jsonDecode(snippet);
-            _log.fine("Succesfully decoded json data: $buffer");
+            //_log.fine("Successfully decoded json data: $buffer");
             buffer = buffer.substring(end);
             start = buffer.indexOf("Progress: {");
             end = buffer.indexOf("}", buffer.indexOf("}") + 1) + 1;
